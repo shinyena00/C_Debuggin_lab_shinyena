@@ -114,6 +114,15 @@ static void screen_dispatch(Screen *s, int code) {
     for (int i = 0; i < s->count; i++) {
         Widget *w = s->items[i];
         w->vtbl->on_event(w, code);
+        if(w->closed == 1){
+            widget_destroy(w);
+            for(int j = i+1; j<s->count; j++){
+                s->items[j-1] = s->items[j];
+            }
+            s->items[s->count -1] = NULL;
+            s->count--;
+            i--;
+        }
     }
 }
 
@@ -126,8 +135,7 @@ static void screen_render(Screen *s) {
 
 static void dialog_on_event(Widget *self, int code) {
     if (code == 1) {
-        self->closed = 1;
-        widget_destroy(self);   
+        self->closed = 1;  
     }
 }
 

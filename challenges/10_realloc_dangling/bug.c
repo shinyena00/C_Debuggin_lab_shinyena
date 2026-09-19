@@ -31,10 +31,8 @@
  *     그 주소를 해제하면 이중 해제.
  *   (stdout 은 버퍼링되니 stderr 로 찍어야 크래시 직전 로그가 남는다)
  *
- * TODO: 스냅샷은 "원시 버퍼 포인터"가 아니라 내용의 '복사본'을 따로 소유해야 한다.
- *       (예: 스냅샷 시 malloc+memcpy 로 별도 버퍼를 만들고, 그 복사본만 해제)
- *       realloc 이후에는 옛 포인터를 절대 사용/해제하지 말 것.
- */
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

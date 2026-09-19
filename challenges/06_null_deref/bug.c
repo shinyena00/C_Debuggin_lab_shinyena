@@ -27,7 +27,6 @@
  *   → colon 이 (nil) 로 찍힌 줄이 원인.
  *   (stdout 은 버퍼링되니 stderr 로 찍어야 크래시 직전 로그가 남는다)
  *
- * TODO: strchr 의 NULL 반환을 검사하라. ':' 없는 줄은 건너뛰거나 오류로 처리한다.
  */
 #include <stdio.h>
 #include <stdlib.h>

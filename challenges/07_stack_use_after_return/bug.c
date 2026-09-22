@@ -12,23 +12,21 @@
 
 #define MAX_LINES 8
 typedef struct {
-    char **lines;  
+    char *lines[MAX_LINES];  
     int    count;
 } LineView;
 
-static void view_set(LineView *out, char **arr, int n) {
-    out->lines = arr;
+static void view_set(LineView *out, int n) {
     out->count = n;
 }
 
-static void split_lines(LineView *out, char *text) {
-    char *parts[MAX_LINES];              
+static void split_lines(LineView *out, char *text) {          
     int n = 0;
 
     for (char *ln = strtok(text, "\n"); ln && n < MAX_LINES; ln = strtok(NULL, "\n"))
-        parts[n++] = ln;
+        out->lines[n++] = ln;
 
-    view_set(out, parts, n);      
+    view_set(out, n);      
 
 }
 

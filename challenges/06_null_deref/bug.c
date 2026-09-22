@@ -45,10 +45,13 @@ static char *skip_ws(char *s) {
 }
 
 static void parse_headers(char *text, Headers *h) {
-    for (char *line = strtok(text, "\n"); line != NULL; line = strtok(NULL, "\n")) {
-        char *colon = strchr(line, ':');   
+    for (char *line = strtok(text, "\n"); line != NULL; line = strtok(NULL, "\n")) { // 줄 단위로 자름 
+        char *colon = strchr(line, ':');   //:위치 찾아서 자름 
 
-        *colon = '\0';                    
+        if(colon == NULL){
+            continue;
+        }
+        *colon = '\0'; //:위치에 '\0'을 삽입함                    
         char *key = line;
         char *val = skip_ws(colon + 1);
 

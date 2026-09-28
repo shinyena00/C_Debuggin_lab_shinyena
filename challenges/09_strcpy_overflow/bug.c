@@ -27,7 +27,11 @@ static char *join(const char *const *parts, int n) {
 
     size_t off = 0;
     for (int i = 0; i < n; i++) { 
-        strcpy(out + off, parts[i]);
+        int w = snprintf(out + off, need-off, "%s", parts[i]);
+        if(w<=0 || w>=need-off){
+            fprintf(stderr, "buffer overflow 발생");
+            abort();
+        }
         off += strlen(parts[i]);
     }
     out[off] = '\0';

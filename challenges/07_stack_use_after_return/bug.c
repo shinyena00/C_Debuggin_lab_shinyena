@@ -50,5 +50,6 @@ int main(void) {
         checksum += (unsigned char)v.lines[i][0];
 
     printf("lines = %d, checksum = %ld\n", v.count, checksum);
+    
     return 0;
 }

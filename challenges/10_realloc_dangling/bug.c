@@ -7,30 +7,7 @@
  *
  * [기대 동작]
  *   스냅샷을 찍고 값을 많이 추가한 뒤, 정리(eb_free)에서 누수 없이 해제하고 정상 종료.
- *
- * [증상]
- *   eb_snapshot() 이 저장하는 것은 "그 시점의 data 포인터(원시 주소)"다. 이후 eb_grow()
- *   가 realloc 으로 버퍼를 옮기면(주소 변경), 저장해 둔 스냅샷 포인터는 '이미 해제된
- *   옛 블록'을 가리키게 된다(댕글링). 정리 시 eb_free() 는 현재 data 를 해제한 뒤
- *   undo[] 의 옛 포인터들도 free 하는데, 그 블록들은 realloc 이 이미 해제한 것이라
- *   → double free / invalid pointer 로 glibc abort(SIGABRT).
- *
- * [gdb 로 잡기]
- *   make gdb NAME=10_realloc_dangling
- *   (gdb) run                       → abort
- *   (gdb) bt                        → eb_free 의 free(e->undo[i]) 지점
- *   (gdb) print e->undo[i]          → 이 주소가 현재 data 와 다른 '옛' 주소임을 확인
- *   (gdb) break eb_grow             → realloc 전후 e->data 주소가 바뀌는지 관찰
- *
- * [printf(로그)로 잡기]
- *   grow 에서 realloc 전후 주소를, 스냅샷/해제 시 저장/해제 주소를 찍어 대조:
- *     (grow)     fprintf(stderr, "grow old=%p new=%p\n", (void*)old, (void*)e->data); // old 추가 후 확인
- *     (snapshot) fprintf(stderr, "snap  save=%p\n", (void*)e->data);
- *     (free)     fprintf(stderr, "free  undo[%d]=%p\n", i, (void*)e->undo[i]);
- *   → snapshot 이 저장한 주소가 grow 에서 이동해 이미 해제된 뒤, free 에서 다시
- *     그 주소를 해제하면 이중 해제.
- *   (stdout 은 버퍼링되니 stderr 로 찍어야 크래시 직전 로그가 남는다)
- *
+
 */
 
 #include <stdio.h>
@@ -52,8 +29,6 @@ static void eb_init(EditBuffer *e) {
     e->undo_n = 0;
     e->data = malloc(e->cap * sizeof(int));
     if (!e->data) { perror("malloc"); exit(1); }
-    /* data 바로 뒤에 놓이는 별도 할당. data 가 힙 맨 끝(top)이 아니게 되어
-       이후 realloc 이 제자리 확장 대신 '이동'을 택하게 만든다(→ 옛 블록 해제). */
     e->clipboard = malloc(e->cap * sizeof(int));
     if (!e->clipboard) { perror("malloc"); exit(1); }
 }

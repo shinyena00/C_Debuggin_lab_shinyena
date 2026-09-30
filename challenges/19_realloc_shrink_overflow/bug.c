@@ -18,27 +18,33 @@
 
 typedef struct {
     double *samples;
-    size_t  len;      
+    // size_t  len; len을 쓰는 이유가 없음       
     size_t  cap;      
 } Signal;
 
 static void signal_init(Signal *s, size_t n) {
     s->samples = malloc(n * sizeof(double));
     if (!s->samples) { perror("malloc"); exit(1); }
-    s->len = s->cap = n;
+    s->cap = n;
     for (size_t i = 0; i < n; i++) s->samples[i] = (double)(i % 7) - 3.0;
 }
 
 static void signal_trim(Signal *s, size_t keep) {
+
     if (keep > s->cap) return;
+    double *temp = s->samples;
     double *p = realloc(s->samples, keep * sizeof(double));
     if (p) s->samples = p;
+    else if(keep == 0){ // keep이 0이어서 samples가 댕글링 포인터가 되는 경우 대비 
+        s->samples = NULL;
+    }
+    else s->samples = temp; // realloc이 null을 반환하는 경우 대비
     s->cap = keep;                 
 }
 
 static double signal_energy(const Signal *s) {
     double e = 0.0;
-    for (size_t i = 0; i < s->len; i++) {   
+    for (size_t i = 0; i < s->cap; i++) {   
         e += s->samples[i] * s->samples[i];
     }
     return e;
@@ -53,7 +59,8 @@ int main(void) {
 
     double e = signal_energy(&s);   
     
-    printf("energy = %.1f (len=%zu cap=%zu)\n", e, s.len, s.cap);
+    // printf("energy = %.1f (len=%zu cap=%zu)\n", e, s.len, s.cap);
+    printf("energy = %.1f (cap=%zu)\n", e, s.cap); // len 이 의미가 없어서 지웟음 
     free(s.samples);
     return 0;
 }

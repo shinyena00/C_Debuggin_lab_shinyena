@@ -42,7 +42,7 @@ static Job *push_job(Job *head, int id, int priority) {
     return n;
 }
 
-/* 취소된 잡을 반납한다(해제 책임은 이 함수가 진다). */
+
 static void job_release(Job *j) {
     free(j);
 }

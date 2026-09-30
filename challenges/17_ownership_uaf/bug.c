@@ -10,35 +10,6 @@
  * [기대 동작]
  *   모든 메시지를 배달·소비하고, 브로커를 종료하며 누수 없이 정리한 뒤 정상 종료.
  *
- * [예시 상황]
- *   채팅 서버
- *   hello를 발행하면, 수신함(inbox)에 넣어서 상대 앱에 푸시하고, 동시에 대화 이력(log)에도 같은 메시지를 남깁니다.
- * 
- * [증상]
- *   구독자가 배달받은 Msg 를 free 하는데, 브로커의 log[] 는 "같은 포인터"를 여전히
- *   들고 있다(소유권이 두 곳에 걸침). broker_shutdown() 이 log[] 를 순회하며 이미
- *   소비자가 해제한 Msg 를 다시 정리한다: msg_free() 가 해제된 구조체를 재차 읽어
- *   (m->body) 그 값을 free → use-after-free/이중 해제. 해제된 청크는 할당자가 덮어써
- *   m->body 가 엉뚱한 주소가 되므로 대개 SIGSEGV(glibc 가 감지하면 double free abort).
- *   발행/배달/감사가 서로 다른 함수에 흩어져 있어 "누가 소유자인지" 헷갈리는 것이 함정.
- *
- * [gdb 로 잡기]
- *   make gdb NAME=17_ownership_uaf
- *   (gdb) run                        → 크래시(SIGSEGV, 또는 abort)
- *   (gdb) bt                         → broker_shutdown → msg_free(b->log[i]) 지점
- *   (gdb) print b->log[i]            → 이 주소가 앞서 구독자가 free 한 것과 같은지 확인
- *   (gdb) break on_message           → 구독자가 free 하는 주소를 기록해 두고 대조
- *
- * [printf(로그)로 잡기]
- *   "누가 어떤 주소를 free 하는지"를 추적한다:
- *     (구독자)   fprintf(stderr, "consume free msg=%p\n", (void*)m);
- *     (shutdown) fprintf(stderr, "audit   free log[%d]=%p\n", i, (void*)b->log[i]);
- *   → 같은 주소가 두 곳에서 free 되면 이중 해제.
- *   (stdout 은 버퍼링되니 stderr 로 찍어야 크래시 직전 로그가 남는다)
- *
- * TODO: 소유권은 한 곳만 갖는다. log[] 는 "감사용 참조"일 뿐이므로 free 하지 않거나,
- *       배달 시 로그 슬롯을 무효화(넘긴 소유권을 추적)하세요. 소비자가 소유하면
- *       브로커는 절대 그 Msg 를 해제하지 않는다.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,13 +17,13 @@
 
 typedef struct {
     int   id;
-    char *body;      /* 힙 문자열 */
+    char *body;  
 } Msg;
 
 #define QCAP 16
 typedef struct {
-    Msg *inbox[QCAP];   int head, tail;      /* 원형 큐 */
-    Msg *log[QCAP];     int log_n;            /* 감사용: 같은 Msg 포인터를 보관 */
+    Msg *inbox[QCAP];   int head, tail; 
+    Msg *log[QCAP];     int log_n;
 } Broker;
 
 typedef void (*Subscriber)(Msg *m);

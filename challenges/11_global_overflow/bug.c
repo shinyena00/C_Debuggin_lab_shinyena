@@ -20,12 +20,18 @@ static size_t arena_off = 0;
 static void *arena_alloc(size_t n) {
     void *p = &arena[arena_off];
     arena_off += n;
+    if(arena_off > ARENA_SIZE){
+        return NULL; // 처음에 만들었던범위를 넘으면 NULL을 반환 
+    }
     return p;
 }
 
 static char *intern(const char *s) {
     size_t n = strlen(s) + 1;
     char *dst = arena_alloc(n);
+    if(!dst){
+        return NULL;
+    }
     memcpy(dst, s, n); 
     return dst;
 }
@@ -43,7 +49,11 @@ int main(void) {
     for (int i = 0; i < 100000; i++) {
         char buf[32];
         snprintf(buf, sizeof buf, "%s-%d", words[i % nwords], i);
-        last = intern(buf);                 
+        last = intern(buf);
+        if(!last){
+            fprintf(stderr, "global overflow 발생"); // 에러 발생 알림 
+            abort();
+        }                 
         total += (long)strlen(last);
     }
 

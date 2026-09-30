@@ -11,7 +11,6 @@
  *  소켓을 열고, 읽기/쓰기 버퍼를 잡고, SSL 세션을 만든 뒤 SSL_do_handshake()로 인증서를 확인. 
  *  핸드셰이크가 실패하면 소켓·SSL 객체·버퍼를 역순으로 닫음. handshake_ok가 바로 이 단계.
  *
-
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,11 +23,22 @@ typedef struct {
 } Conn;
 
 static int handshake_ok(const Conn *c) {
-    (void)c;
-    return 0;
+    for (int i = 0; i < 4; i++){
+        if(c->state[i] != i){
+            return 0;
+        }
+    }
+    if (strcmp(c->tx, "tx-ready") != 0){
+        return 0;
+    }
+    if(strcmp(c->rx, "rx-ready") != 0){
+        return 0;
+    }
+    return 1;
 }
 
 static int conn_open(Conn *c, size_t bufsz) {
+    int ok = 0;
     c->rx = c->tx = NULL;
     c->state = NULL;
 
@@ -45,13 +55,14 @@ static int conn_open(Conn *c, size_t bufsz) {
     strcpy(c->tx, "tx-ready");
     for (int i = 0; i < 4; i++) c->state[i] = i;
 
-    if (!handshake_ok(c)) {
+    // if (!handshake_ok(c)) {
 
-        free(c->tx);              
-        goto fail_tx;             
-    }
+    //     free(c->tx);              
+    //     goto fail_tx;             
+    // }
 
-    return 0;                     
+    ok = handshake_ok(c);
+
 
 fail_state:
     free(c->state);
@@ -59,6 +70,10 @@ fail_tx:
     free(c->tx);                 
 fail_rx:
     free(c->rx);
+
+    if(ok == 1){
+        return 0; // 성공해도 일단 이 파일에서는 free를 해줘야하니가 리턴한 값을 밑에서 검사해서 ahndshake를 
+    }
     return -1;
 }
 

@@ -40,7 +40,8 @@ static User *login(int uid, const char *name) {
 }
 
 static void logout(Session *s) {
-    free(s->user);         
+    free(s->user);
+    s->user = NULL;// 포인터에 NULL을 대입해서 정리해줌 
 }
 
 
@@ -53,6 +54,11 @@ static char *audit_record(const char *event) {
 }
 
 static int handle_request(Session *s, const char *action) {
+    
+    if(!s->user){
+        fprintf(stderr, "null 포인터 접근");
+        return -1;
+    } // 없는 곳에 접근하게 되면 원래 정상종료가 1 이니까 -1으로 종료하게 만듬 
 
     return s->user->permission(action);    
 }

@@ -39,9 +39,8 @@ static void row_print(const Row *r) {
 }
 
 static void row_free(Row *r) {
-    for (int i = 0; i < r->n; i++) {
-        free(r->fields[i]);       
-    }
+    free(r->base);//그냥 malloc을 받아왔던 base를 free해줌 r->fields는 n에 0을 대입하면 접근하지 않으니까 NULL을 대입하지 않아도
+    //괜찮다고 생각함 
     r->n = 0;
 }
 

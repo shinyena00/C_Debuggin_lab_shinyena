@@ -17,15 +17,26 @@
 
 
 static void append_field(char *buf, size_t cap, size_t *len, const char *field, char sep) {
+    size_t flen = strlen(field);
+
+    if(*len == 0){ // 0일때만 따로 빼서 \0문자 자리 체크만 해줌 
+        if((flen + 1) > cap){
+            return;
+        }
+    }
+    else if ((*len + flen + 2) > cap){ // 구분자를 밑에서 더해주니까 미리 더해봐야해서 + 1, NULL 문자 자리 체크 때문에 + 1
+        return; // 더해서 cap을 넘기면 쓰지 못하게 함
+    }
+
     if (*len > 0) {
         buf[(*len)++] = sep;             
-    }
-    size_t flen = strlen(field);
+    } // 이걸 밑으로 내림 
+    
     for (size_t i = 0; i < flen; i++) {
         buf[(*len)++] = field[i];         
     }
     buf[*len] = '\0';
-    (void)cap;                            
+    // (void)cap; 여기서 문제                             
 }
 
 static void build_record(char *rec, size_t cap) {

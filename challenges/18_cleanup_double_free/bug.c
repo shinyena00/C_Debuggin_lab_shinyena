@@ -25,7 +25,7 @@ typedef struct {
 
 static int handshake_ok(const Conn *c) {
     (void)c;
-    return 0;                     /* 실패 */
+    return 0;
 }
 
 static int conn_open(Conn *c, size_t bufsz) {

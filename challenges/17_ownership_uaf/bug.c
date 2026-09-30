@@ -17,13 +17,16 @@
 
 typedef struct {
     int   id;
-    char *body;  
+    int consumed; // 사용했는지 체크하는 필드를 추가해서 소유권 관리 
+    char *body; 
 } Msg;
 
 #define QCAP 16
 typedef struct {
-    Msg *inbox[QCAP];   int head, tail; 
-    Msg *log[QCAP];     int log_n;
+    Msg *inbox[QCAP];
+    int head, tail; 
+    Msg *log[QCAP];
+    int log_n;
 } Broker;
 
 typedef void (*Subscriber)(Msg *m);
@@ -32,6 +35,7 @@ static Msg *msg_new(int id, const char *body) {
     Msg *m = malloc(sizeof *m);
     if (!m) exit(1);
     m->id = id;
+    m->consumed = 0;
     m->body = malloc(strlen(body) + 1);
     if (!m->body) exit(1);
     strcpy(m->body, body);
@@ -52,20 +56,22 @@ static void publish(Broker *b, int id, const char *body) {
 
 static void deliver(Broker *b, Subscriber sub) {
     while (b->head != b->tail) {
-        Msg *m = b->inbox[b->head];
+        Msg *m = b->inbox[b->head]; // 꺼내서 없앤 거고
         b->head = (b->head + 1) % QCAP;
-        sub(m);                          
+        sub(m);                         
     }
 }
 
 static void on_message(Msg *m) {
     printf("recv #%d: %s\n", m->id, m->body);
-    msg_free(m);                         
+    m -> consumed = 1;                       
 }
 
 static void broker_shutdown(Broker *b) {
     for (int i = 0; i < b->log_n; i++) {
-        msg_free(b->log[i]);             
+        if(b->log[i]->consumed == 1){
+            msg_free(b->log[i]); // 브로커가 안 팔린 건 가지고 있어야한다고 판단해서 소비된 것만 free하게 만들엇음 
+        }             
     }
     b->log_n = 0;
 }

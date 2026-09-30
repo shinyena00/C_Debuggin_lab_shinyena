@@ -54,8 +54,11 @@ static Job *filter_jobs(Job *head, int threshold, Audit *audit) {
     while (cur != NULL) {
         if (cur->priority < threshold) {
             audit_add(audit, cur->id);   
-            job_release(cur);            
-            cur = cur->next;             
+            // job_release(cur);            
+            // cur = cur->next;
+            Job *temp = cur; //temp에 free해야할 cur를 저장 
+            cur = cur->next; // cur는 옮겨줌
+            job_release(temp); // free는 temp 로 바꿈 
         } else {
             Job *nx = cur->next;
             cur->next = NULL;

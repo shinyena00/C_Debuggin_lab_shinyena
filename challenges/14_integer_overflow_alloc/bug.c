@@ -10,13 +10,13 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h> // 수정할 때 SIZE_MAX 로 곱셈 오버플로를 검사하라고 미리 넣어 둔 헤더
+#include <stdint.h>
 
 typedef struct {
     int width;
     int height;
     int channels;
-    int nbytes;              
+    size_t nbytes;  // 이것도 바꿈             
     unsigned char *px;
 } Image;
 
@@ -27,7 +27,12 @@ static Image *image_new(int width, int height, int channels) {
     img->height = height;
     img->channels = channels;
 
-    img->nbytes = width * height * channels;
+    if ((size_t) width > SIZE_MAX / height || (size_t)width * height > SIZE_MAX / channels){ // 오버플로우가 발생하면 바로 return 하게 만듬 
+        fprintf(stderr, "integer overflow 발생");
+        //abort(); 바로 abrot내면 좋은데 일단 컴파일 되게 만듬
+        return NULL;
+    }
+    img->nbytes = (size_t)width * height * channels;// 밑이랑 비트 수 맞춤 
     img->px = malloc((size_t)img->nbytes);     
     if (!img->px) { perror("malloc px"); exit(1); }
     return img;
@@ -36,6 +41,7 @@ static Image *image_new(int width, int height, int channels) {
 static void image_fill(Image *img, unsigned char value) {
 
     size_t total = (size_t)img->width * (size_t)img->height * (size_t)img->channels;
+
     for (size_t i = 0; i < total; i++) {
         img->px[i] = value;                     
     }
@@ -44,7 +50,10 @@ static void image_fill(Image *img, unsigned char value) {
 int main(void) {
 
     Image *img = image_new(65536, 65536, 4);
-    printf("allocated nbytes(int)=%d for %dx%d x%d\n",
+    if(!img){
+        return 1; // 문제 생겻을 때는 1로 반환 
+    }
+    printf("allocated nbytes(int)=%zu for %dx%d x%d\n", // 이것도 zu로 변경함 
            img->nbytes, img->width, img->height, img->channels);
 
     image_fill(img, 0xFF);                       

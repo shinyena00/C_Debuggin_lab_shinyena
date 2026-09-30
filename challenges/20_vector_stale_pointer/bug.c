@@ -48,14 +48,18 @@ int main(void) {
 
     for (int k = 0; k < 200000; k++) hist_add(&h, k);
 
-    Bucket *hot = &h.data[100000];
-    hot->count = 1;
+    // Bucket *hot = &h.data[100000];
+    size_t hot = 100000; //이런식으로 hot은 인덱스만 들고 있게 하는 게 2번째 
+    // hot->count = 1;
+    h.data[hot].count = 1;
 
     for (int k = 200000; k < 600000; k++) hist_add(&h, k);
 
-    hot->count += 1000;
+    // hot = &h.data[100000]; // 다시 찾아줘야함 
+    // hot->count += 1000;
+    h.data[hot].count  += 1000;
 
-    printf("hot=%ld total=%ld len=%zu\n", hot->count, hist_total(&h), h.len);
+    printf("hot=%ld total=%ld len=%zu\n", h.data[hot].count, hist_total(&h), h.len);
     free(h.data);
     return 0;
 }

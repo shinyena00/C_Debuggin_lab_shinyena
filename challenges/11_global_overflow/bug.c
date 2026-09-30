@@ -51,8 +51,9 @@ int main(void) {
         snprintf(buf, sizeof buf, "%s-%d", words[i % nwords], i);
         last = intern(buf);
         if(!last){
-            fprintf(stderr, "global overflow 발생"); // 에러 발생 알림 
-            abort();
+            fprintf(stderr, "global overflow 발생\n"); // 에러 발생 알림
+            break; // 일단 정상종료하게 만듬 
+            //abort();
         }                 
         total += (long)strlen(last);
     }
